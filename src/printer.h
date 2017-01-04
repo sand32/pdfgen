@@ -28,6 +28,7 @@ misrepresented as being the original software.
 #include <QtWebEngineWidgets>
 
 typedef void (*LoadFinishedCallback)(const char* pdf, int size);
+class Config;
 
 class Printer : public QWebEnginePage
 {
@@ -37,7 +38,7 @@ class Printer : public QWebEnginePage
 	QPageLayout _layout;
 
 public:
-	Printer();
+	Printer(const Config& config);
 	~Printer();
 
 	void renderHtml(const QString& html);

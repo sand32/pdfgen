@@ -25,10 +25,11 @@ misrepresented as being the original software.
 #include "printer.h"
 
 #include "log.h"
+#include "config.h"
 
 //---------------------------------------------------------------------------
 
-Printer::Printer()
+Printer::Printer(const Config& config)
 {
 	connect(this, &QWebEnginePage::loadFinished, this, &Printer::onLoadFinished);
 }
@@ -41,7 +42,11 @@ Printer::~Printer()
 
 void Printer::renderHtml(const QString& html)
 {
-	setHtml(html);
+	QFile file("temp.txt");
+	file.open(QIODevice::WriteOnly);
+	file.write(html.toUtf8());
+	file.close();
+	//setHtml(html);
 }
 
 void Printer::renderFromJson(const QByteArray& json)

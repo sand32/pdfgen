@@ -22,44 +22,30 @@ misrepresented as being the original software.
 -----------------------------------------------------------------------------
 */
 
+#ifndef _CONFIG_H_
+#define _CONFIG_H_
+
 #include <QtGui/QtGui>
-#include <QtWebEngine/QtWebEngine>
-#include "log.h"
-#include "config.h"
-#include "printer.h"
-#include "server.h"
 
-#if defined( __WIN32__ ) || defined( _WIN32 )
-#define WIN32_LEAN_AND_MEAN
-#include "windows.h"
-
-int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow)
+class Config
 {
-	int argc = __argc;
-	char** argv = __argv;
-#else
-int main(int argc, char* argv[])
-{
-#endif
-	Config config;
-	bool success = config.load("./config.json");
-	if(!success){
-		return 1;
-	}
+	QPageLayout _pageLayout;
+	int _port;
 
-	QApplication app(argc, argv);
-	QtWebEngine::initialize();
+public:
+	Config();
+	
+	bool load(const QString& filename);
 
-	Printer printer(config);
-	Server server(&printer);
-	server.listen(QHostAddress::Any, config.port());
+	int port() const;
+	const QPageLayout& pageLayout() const;
 
-	Log::log("Listening on port " + QString::number(config.port()));
-	Log::log("-------------------------------------------------");
-	Log::log("             Initialization Complete");
-	Log::log("-------------------------------------------------");
+private:
+	void readPageLayout(const QJsonObject& object);
 
-	app.exec();
+	static QHash<QString, QPageSize::PageSizeId> PageSizes;
+	static QHash<QString, QPageLayout::Orientation> PageOrientations;
+	static QHash<QString, QPageLayout::Unit> PageUnits;
+};
 
-	return 0;
-}
+#endif // _CONFIG_H_
