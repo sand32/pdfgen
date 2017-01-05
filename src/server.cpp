@@ -114,6 +114,7 @@ void Server::onSocketRecv()
 						QTcpSocket* socket = _clients[socketID].Socket;
 						socket->write(result);
 						socket->flush();
+						socket->close();
 					}
 				}, socketID(socket));
 				break;
@@ -121,7 +122,6 @@ void Server::onSocketRecv()
 				_printer->renderFromJson(request.Content);
 				break;
 		}
-		socket->close();
 	}else{
 		// Restart the connection timeout
 		_clients[socketID(socket)].Timer->start(_config.connectionTimeoutMS());
