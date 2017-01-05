@@ -33,9 +33,9 @@ enum RequestType
 
 struct Request
 {
+	QByteArray Content;
 	quint32 BytesRemaining;
 	RequestType Type;
-	QByteArray Content;
 };
 
 #endif // _REQUEST_H_

@@ -28,8 +28,6 @@ misrepresented as being the original software.
 #include "log.h"
 #include "printer.h"
 
-#include <iostream>
-
 //---------------------------------------------------------------------------
 
 Server::Server(Printer* printer, const Config& config)
@@ -49,6 +47,8 @@ void Server::onNewConnection()
 {
 	QTcpSocket* socket;
 	while(socket = nextPendingConnection()){
+		_clients[socketID(socket)].Socket = socket;
+
 		connect(socket, &QIODevice::readyRead, this, &Server::onSocketRecv);
 		connect(socket, &QAbstractSocket::disconnected, this, &Server::onSocketDisconnect);
 
@@ -58,7 +58,7 @@ void Server::onNewConnection()
 			socket->abort();
 		});
 		timer->start(_config.connectionTimeoutMS());
-		_timeouts[socketID(socket)] = timer;
+		_clients[socketID(socket)].Timer = timer;
 	}
 }
 
@@ -67,9 +67,9 @@ void Server::onSocketRecv()
 	QTcpSocket* socket = static_cast<QTcpSocket*>(sender());
 
 	// Pause the connection timeout for the duration of recv
-	_timeouts[socketID(socket)]->stop();
+	_clients[socketID(socket)].Timer->stop();
 
-	Request& request = _requests[socketID(socket)];
+	Request& request = _clients[socketID(socket)].CurrentRequest;
 	if(request.BytesRemaining == 0
 	&& request.Content.length() == 0
 	&& !readHeader(socket, socket->bytesAvailable())){
@@ -105,32 +105,36 @@ void Server::onSocketRecv()
 	if(request.BytesRemaining == 0){
 		switch(request.Type){
 			case RT_HTML:
-				_printer->renderHtml(request.Content, [](const QByteArray& result){
-					QFile file("./temp.pdf");
-					file.open(QIODevice::WriteOnly);
-					file.write(result);
-					file.close();
-					// socket->write(result);
-					// socket->flush();
-				});
+				_printer->renderHtml(request.Content, [this](const QByteArray& result, const QString& socketID){
+					// QFile file("./temp.pdf");
+					// file.open(QIODevice::WriteOnly);
+					// file.write(result);
+					// file.close();
+					if(_clients.count(socketID)){
+						QTcpSocket* socket = _clients[socketID].Socket;
+						bool success = socket->write(result);
+						Log::log(QString::number(success));
+						socket->flush();
+					}else{
+						Log::log("Socket closed, cannot respond.");
+					}
+				}, socketID(socket));
 				break;
 			case RT_JSON:
 				_printer->renderFromJson(request.Content);
 				break;
 		}
-		_requests.remove(socketID(socket));
 		socket->close();
 	}else{
 		// Restart the connection timeout
-		_timeouts[socketID(socket)]->start(_config.connectionTimeoutMS());
+		_clients[socketID(socket)].Timer->start(_config.connectionTimeoutMS());
 	}
 }
 
 void Server::onSocketDisconnect()
 {
 	QTcpSocket* socket = static_cast<QTcpSocket*>(sender());
-	_requests.remove(socketID(socket));
-	_timeouts.remove(socketID(socket));
+	_clients.remove(socketID(socket));
 	socket->deleteLater();
 }
 
@@ -166,7 +170,7 @@ bool Server::readHeader(QTcpSocket* socket, qint64 bytesAvailable)
 			}
 
 			request.Content.reserve(size);
-			_requests[socketID(socket)] = request;
+			_clients[socketID(socket)].CurrentRequest = request;
 			return true;
 		}
 	}

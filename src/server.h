@@ -27,7 +27,7 @@ misrepresented as being the original software.
 
 #include <QtCore/QtCore>
 #include <QtNetwork/QtNetwork>
-#include "request.h"
+#include "client.h"
 
 class Config;
 class Printer;
@@ -38,8 +38,7 @@ class Server : public QTcpServer
 
 	const Config& _config;
 	Printer* _printer;
-	QHash<QString, Request> _requests;
-	QHash<QString, QTimer*> _timeouts;
+	QHash<QString, Client> _clients;
 public:
 	Server(Printer* printer, const Config& config);
 	~Server();

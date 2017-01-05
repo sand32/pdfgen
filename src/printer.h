@@ -26,8 +26,8 @@ misrepresented as being the original software.
 #define _PRINTER_H_
 
 #include <QtWebEngineWidgets>
+#include <functional>
 
-typedef void (*LoadFinishedCallback)(const QByteArray&);
 class Config;
 
 class Printer
@@ -38,7 +38,7 @@ public:
 	Printer(const Config& config);
 	~Printer();
 
-	void renderHtml(const QString& html, LoadFinishedCallback callback);
+	void renderHtml(const QString& html, std::function<void (const QByteArray&, const QString&)> callback, const QString& requestID);
 	void renderFromJson(const QByteArray& json);
 };
 

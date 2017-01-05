@@ -41,13 +41,13 @@ Printer::~Printer()
 
 //---------------------------------------------------------------------------
 
-void Printer::renderHtml(const QString& html, LoadFinishedCallback callback)
+void Printer::renderHtml(const QString& html, std::function<void (const QByteArray&, const QString&)> callback, const QString& requestID)
 {
 	Document* page = new Document();
 	page->connect(page, &QWebEnginePage::loadFinished, [=](bool ok){
 		if(ok){
 			page->printToPdf([=](const QByteArray& result){
-				callback(result);
+				callback(result, requestID);
 				page->deleteLater();
 			}, _layout);
 		}
