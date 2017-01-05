@@ -112,11 +112,8 @@ void Server::onSocketRecv()
 					// file.close();
 					if(_clients.count(socketID)){
 						QTcpSocket* socket = _clients[socketID].Socket;
-						bool success = socket->write(result);
-						Log::log(QString::number(success));
+						socket->write(result);
 						socket->flush();
-					}else{
-						Log::log("Socket closed, cannot respond.");
 					}
 				}, socketID(socket));
 				break;
