@@ -29,16 +29,19 @@ misrepresented as being the original software.
 #include <QtNetwork/QtNetwork>
 #include "request.h"
 
+class Config;
 class Printer;
 
 class Server : public QTcpServer
 {
 	Q_OBJECT
 
+	const Config& _config;
 	Printer* _printer;
-	QHash<qintptr, Request> _requests;
+	QHash<QString, Request> _requests;
+	QHash<QString, QTimer*> _timeouts;
 public:
-	Server(Printer* printer);
+	Server(Printer* printer, const Config& config);
 	~Server();
 
 private slots:
@@ -48,6 +51,7 @@ private slots:
 
 private:
 	bool readHeader(QTcpSocket* socket, qint64 bytesAvailable);
+	QString socketID(QTcpSocket* socket) const;
 };
 
 #endif // _SERVER_H_

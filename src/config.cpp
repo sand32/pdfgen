@@ -29,7 +29,8 @@ misrepresented as being the original software.
 //---------------------------------------------------------------------------
 
 Config::Config()
-	: _port(0)
+	: _port(0),
+	  _connectionTimeoutMS(0)
 {
 }
 
@@ -66,6 +67,9 @@ bool Config::load(const QString& filename)
 		if(it.key().toLower() == "port"){
 			_port = value.toInt();
 		}
+		if(it.key().toLower() == "connectiontimeoutms"){
+			_connectionTimeoutMS = value.toInt();
+		}
 		if(it.key().toLower() == "renderoptions"){
 			readPageLayout(value.toObject());
 		}
@@ -77,6 +81,11 @@ bool Config::load(const QString& filename)
 int Config::port() const
 {
 	return _port;
+}
+
+int Config::connectionTimeoutMS() const
+{
+	return _connectionTimeoutMS;
 }
 
 const QPageLayout& Config::pageLayout() const

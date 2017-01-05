@@ -42,7 +42,7 @@ Printer::~Printer()
 
 void Printer::renderHtml(const QString& html)
 {
-	QFile file("temp.txt");
+	QFile file("./temp.txt");
 	file.open(QIODevice::WriteOnly);
 	file.write(html.toUtf8());
 	file.close();

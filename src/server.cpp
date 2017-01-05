@@ -24,15 +24,17 @@ misrepresented as being the original software.
 
 #include "server.h"
 
-#include "printer.h"
+#include "config.h"
 #include "log.h"
+#include "printer.h"
 
 #include <iostream>
 
 //---------------------------------------------------------------------------
 
-Server::Server(Printer* printer)
-	: _printer(printer)
+Server::Server(Printer* printer, const Config& config)
+	: _printer(printer),
+	  _config(config)
 {
 	connect(this, &QTcpServer::newConnection, this, &Server::onNewConnection);
 }
@@ -49,20 +51,30 @@ void Server::onNewConnection()
 	while(socket = nextPendingConnection()){
 		connect(socket, &QIODevice::readyRead, this, &Server::onSocketRecv);
 		connect(socket, &QAbstractSocket::disconnected, this, &Server::onSocketDisconnect);
+
+		QTimer* timer = new QTimer(socket);
+		connect(timer, &QTimer::timeout, [socket](){
+			Log::log("Connection timeout");
+			socket->abort();
+		});
+		timer->start(_config.connectionTimeoutMS());
+		_timeouts[socketID(socket)] = timer;
 	}
 }
 
 void Server::onSocketRecv()
 {
 	QTcpSocket* socket = static_cast<QTcpSocket*>(sender());
-	Request& request = _requests[socket->socketDescriptor()];
+
+	// Pause the connection timeout for the duration of recv
+	_timeouts[socketID(socket)]->stop();
+
+	Request& request = _requests[socketID(socket)];
 	if(request.BytesRemaining == 0
 	&& request.Content.length() == 0
 	&& !readHeader(socket, socket->bytesAvailable())){
 		Log::log("Invalid header received.", LL_ERROR);
-		_requests.remove(socket->socketDescriptor());
 		socket->abort();
-		socket->deleteLater();
 		return;
 	}
 
@@ -72,45 +84,46 @@ void Server::onSocketRecv()
 		char* buffer = new char[qMin(size, (qint64)1024)];
 		qint64 result = socket->read(buffer, size);
 		if(result < 0){
-			Log::log(socket->errorString(), LL_ERROR);
-			_requests.remove(socket->socketDescriptor());
+			Log::log("Socket error: " + socket->errorString(), LL_ERROR);
 			socket->abort();
-			socket->deleteLater();
 			return;
 		}
 
 		// If we've received more content in this request than promised: esplode
-		if((qint64)request.BytesRemaining - result < 0){
+		if(static_cast<qint64>(request.BytesRemaining) - result < 0){
 			Log::log("Invalid content size detected, dropping connection.", LL_ERROR);
-			_requests.remove(socket->socketDescriptor());
 			socket->abort();
-			socket->deleteLater();
 			return;
 		}
 
 		// All clear, let's update the request
 		request.BytesRemaining -= result;
 		request.Content.append(buffer, result);
+	}
 
-		// If we've received all the request's content, send it for printing
-		if(request.BytesRemaining == 0){
-			switch(request.Type){
-				case RT_HTML:
-					_printer->renderHtml(request.Content);
-					break;
-				case RT_JSON:
-					_printer->renderFromJson(request.Content);
-					break;
-			}
-			_requests.remove(socket->socketDescriptor());
+	// If we've received all the request's content, send it for printing
+	if(request.BytesRemaining == 0){
+		switch(request.Type){
+			case RT_HTML:
+				_printer->renderHtml(request.Content);
+				break;
+			case RT_JSON:
+				_printer->renderFromJson(request.Content);
+				break;
 		}
+		_requests.remove(socketID(socket));
+		socket->close();
+	}else{
+		// Restart the connection timeout
+		_timeouts[socketID(socket)]->start(_config.connectionTimeoutMS());
 	}
 }
 
 void Server::onSocketDisconnect()
 {
 	QTcpSocket* socket = static_cast<QTcpSocket*>(sender());
-	_requests.remove(socket->socketDescriptor());
+	_requests.remove(socketID(socket));
+	_timeouts.remove(socketID(socket));
 	socket->deleteLater();
 }
 
@@ -118,10 +131,12 @@ void Server::onSocketDisconnect()
 
 bool Server::readHeader(QTcpSocket* socket, qint64 bytesAvailable)
 {
-	if(bytesAvailable >= 12){
-		char* buffer = new char[8];
-		qint64 result = socket->read(buffer, 8);
-		if(result < 0){
+	const int headerSize = 12;
+	if(bytesAvailable >= headerSize){
+		char* buffer = new char[headerSize];
+		qint64 result = socket->read(buffer, headerSize);
+		if(result != 12){
+			Log::log("bad header size");
 			return false;
 		}
 
@@ -138,11 +153,20 @@ bool Server::readHeader(QTcpSocket* socket, qint64 bytesAvailable)
 			&& request.Type != RT_JSON){
 				return false;
 			}
+			if(size > 4000000){
+				Log::log("Unwilling to accomodate payload size of " + QString::number(size));
+				return false;
+			}
 
 			request.Content.reserve(size);
-			_requests[socket->socketDescriptor()] = request;
+			_requests[socketID(socket)] = request;
 			return true;
 		}
 	}
 	return false;
+}
+
+QString Server::socketID(QTcpSocket* socket) const
+{
+	return socket->peerAddress().toString() + QString::number(socket->peerPort());
 }

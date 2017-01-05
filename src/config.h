@@ -31,13 +31,15 @@ class Config
 {
 	QPageLayout _pageLayout;
 	int _port;
+	int _connectionTimeoutMS;
 
 public:
 	Config();
-	
+
 	bool load(const QString& filename);
 
 	int port() const;
+	int connectionTimeoutMS() const;
 	const QPageLayout& pageLayout() const;
 
 private:

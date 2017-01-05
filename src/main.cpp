@@ -51,7 +51,7 @@ int main(int argc, char* argv[])
 	QtWebEngine::initialize();
 
 	Printer printer(config);
-	Server server(&printer);
+	Server server(&printer, config);
 	server.listen(QHostAddress::Any, config.port());
 
 	Log::log("Listening on port " + QString::number(config.port()));
