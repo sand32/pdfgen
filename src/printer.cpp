@@ -26,12 +26,13 @@ misrepresented as being the original software.
 
 #include "log.h"
 #include "config.h"
+#include "document.h"
 
 //---------------------------------------------------------------------------
 
 Printer::Printer(const Config& config)
 {
-	connect(this, &QWebEnginePage::loadFinished, this, &Printer::onLoadFinished);
+	_layout = config.pageLayout();
 }
 
 Printer::~Printer()
@@ -40,13 +41,18 @@ Printer::~Printer()
 
 //---------------------------------------------------------------------------
 
-void Printer::renderHtml(const QString& html)
+void Printer::renderHtml(const QString& html, LoadFinishedCallback callback)
 {
-	QFile file("./temp.txt");
-	file.open(QIODevice::WriteOnly);
-	file.write(html.toUtf8());
-	file.close();
-	//setHtml(html);
+	Document* page = new Document();
+	page->connect(page, &QWebEnginePage::loadFinished, [=](bool ok){
+		if(ok){
+			page->printToPdf([=](const QByteArray& result){
+				callback(result);
+				page->deleteLater();
+			}, _layout);
+		}
+	});
+	page->setHtml(html);
 }
 
 void Printer::renderFromJson(const QByteArray& json)
@@ -58,31 +64,4 @@ void Printer::renderFromJson(const QByteArray& json)
 	}
 
 	QJsonObject object = document.object();
-}
-
-//---------------------------------------------------------------------------
-
-void Printer::javaScriptConsoleMessage(JavaScriptConsoleMessageLevel level, const QString& message, int lineNumber, const QString& sourceID)
-{
-	LogLevel lvl;
-	switch(level){
-		case QWebEnginePage::WarningMessageLevel:
-			lvl = LL_WARNING;
-			break;
-		case QWebEnginePage::ErrorMessageLevel:
-			lvl = LL_ERROR;
-			break;
-	}
-	Log::log(message, lvl);
-}
-
-//---------------------------------------------------------------------------
-
-void Printer::onLoadFinished(bool ok)
-{
-	if(ok){
-		printToPdf([this](const QByteArray& result){
-			_loadFinishedCallback(result.constData(), result.size());
-		}, _layout);
-	}
 }

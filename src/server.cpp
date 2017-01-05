@@ -105,7 +105,14 @@ void Server::onSocketRecv()
 	if(request.BytesRemaining == 0){
 		switch(request.Type){
 			case RT_HTML:
-				_printer->renderHtml(request.Content);
+				_printer->renderHtml(request.Content, [](const QByteArray& result){
+					QFile file("./temp.pdf");
+					file.open(QIODevice::WriteOnly);
+					file.write(result);
+					file.close();
+					// socket->write(result);
+					// socket->flush();
+				});
 				break;
 			case RT_JSON:
 				_printer->renderFromJson(request.Content);

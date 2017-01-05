@@ -22,24 +22,17 @@ misrepresented as being the original software.
 -----------------------------------------------------------------------------
 */
 
-#ifndef _PRINTER_H_
-#define _PRINTER_H_
+#ifndef _DOCUMENT_H_
+#define _DOCUMENT_H_
 
 #include <QtWebEngineWidgets>
 
-typedef void (*LoadFinishedCallback)(const QByteArray&);
-class Config;
-
-class Printer
+class Document : public QWebEnginePage
 {
-	QPageLayout _layout;
+	Q_OBJECT
 
-public:
-	Printer(const Config& config);
-	~Printer();
-
-	void renderHtml(const QString& html, LoadFinishedCallback callback);
-	void renderFromJson(const QByteArray& json);
+protected:
+	void javaScriptConsoleMessage(JavaScriptConsoleMessageLevel level, const QString& message, int lineNumber, const QString& sourceID);
 };
 
-#endif // _PRINTER_H_
+#endif // _DOCUMENT_H_

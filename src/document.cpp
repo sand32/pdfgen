@@ -22,24 +22,22 @@ misrepresented as being the original software.
 -----------------------------------------------------------------------------
 */
 
-#ifndef _PRINTER_H_
-#define _PRINTER_H_
+#include "document.h"
 
-#include <QtWebEngineWidgets>
+#include "log.h"
 
-typedef void (*LoadFinishedCallback)(const QByteArray&);
-class Config;
+//---------------------------------------------------------------------------
 
-class Printer
+void Document::javaScriptConsoleMessage(JavaScriptConsoleMessageLevel level, const QString& message, int lineNumber, const QString& sourceID)
 {
-	QPageLayout _layout;
-
-public:
-	Printer(const Config& config);
-	~Printer();
-
-	void renderHtml(const QString& html, LoadFinishedCallback callback);
-	void renderFromJson(const QByteArray& json);
-};
-
-#endif // _PRINTER_H_
+	LogLevel lvl;
+	switch(level){
+		case QWebEnginePage::WarningMessageLevel:
+			lvl = LL_WARNING;
+			break;
+		case QWebEnginePage::ErrorMessageLevel:
+			lvl = LL_ERROR;
+			break;
+	}
+	Log::log(message, lvl);
+}
