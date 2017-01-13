@@ -32,6 +32,7 @@ Config::Config()
 	: _port(0),
 	  _connectionTimeoutMS(0)
 {
+	_pageLayout.setMode(QPageLayout::FullPageMode);
 }
 
 //---------------------------------------------------------------------------
@@ -97,19 +98,20 @@ const QPageLayout& Config::pageLayout() const
 
 void Config::readPageLayout(const QJsonObject& object)
 {
+	QMarginsF margins;
 	for(QJsonObject::const_iterator it = object.constBegin(); it != object.constEnd(); ++it){
 		QJsonValue value = it.value();
 		if(it.key().toLower() == "margintop"){
-			_pageLayout.setTopMargin(value.toDouble());
+			margins.setTop(value.toDouble());
 		}
 		if(it.key().toLower() == "marginbottom"){
-			_pageLayout.setBottomMargin(value.toDouble());
+			margins.setBottom(value.toDouble());
 		}
 		if(it.key().toLower() == "marginleft"){
-			_pageLayout.setLeftMargin(value.toDouble());
+			margins.setLeft(value.toDouble());
 		}
 		if(it.key().toLower() == "marginright"){
-			_pageLayout.setRightMargin(value.toDouble());
+			margins.setRight(value.toDouble());
 		}
 		if(it.key().toLower() == "pagesize"){
 			_pageLayout.setPageSize(QPageSize(PageSizes[value.toString().toLower()]));
@@ -121,6 +123,7 @@ void Config::readPageLayout(const QJsonObject& object)
 			_pageLayout.setUnits(PageUnits[value.toString().toLower()]);
 		}
 	}
+	_pageLayout.setMargins(margins);
 }
 
 //---------------------------------------------------------------------------
