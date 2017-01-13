@@ -152,8 +152,8 @@ bool Server::readHeader(QTcpSocket* socket, qint64 bytesAvailable)
 		&& buffer[1] == 'D'
 		&& buffer[2] == 'F'
 		&& buffer[3] == 'G'){
-			quint32 type = static_cast<quint32>(buffer[4]);
-			quint32 size = static_cast<quint32>(buffer[8]);
+			quint32 type = *static_cast<quint32*>(static_cast<void*>(&buffer[4]));
+			quint32 size = *static_cast<quint32*>(static_cast<void*>(&buffer[8]));
 			Request request;
 			request.BytesRemaining = size;
 			request.Type = static_cast<RequestType>(type);
