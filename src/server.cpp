@@ -104,7 +104,7 @@ void Server::onSocketRecv()
 	// If we've received all the request's content, send it for printing
 	if(request.BytesRemaining == 0){
 		switch(request.Type){
-			case RT_HTML:
+			case RT_TEXT_HTML:
 				_printer->renderHtml(request.Content, [this](const QByteArray& result, const QString& socketID){
 					// QFile file("./temp.pdf");
 					// file.open(QIODevice::WriteOnly);
@@ -118,7 +118,7 @@ void Server::onSocketRecv()
 					}
 				}, socketID(socket));
 				break;
-			case RT_JSON:
+			case RT_TEXT_JSON:
 				_printer->renderFromJson(request.Content);
 				break;
 		}
@@ -157,8 +157,8 @@ bool Server::readHeader(QTcpSocket* socket, qint64 bytesAvailable)
 			Request request;
 			request.BytesRemaining = size;
 			request.Type = static_cast<RequestType>(type);
-			if(request.Type != RT_HTML
-			&& request.Type != RT_JSON){
+			if(request.Type != RT_TEXT_HTML
+			&& request.Type != RT_TEXT_JSON){
 				return false;
 			}
 			if(size > 4000000){

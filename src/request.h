@@ -25,11 +25,13 @@ misrepresented as being the original software.
 #ifndef _REQUEST_H_
 #define _REQUEST_H_
 
+// If you change this, change the error checking in Server::readHeader
+// as well as the rendering logic in Server::onSocketRecv
 enum RequestType
 {
-	RT_HTML,
-	RT_JSON
-}; // If you change this, change the error checking in Server::readHeader
+	RT_TEXT_HTML,
+	RT_TEXT_JSON
+};
 
 struct Request
 {
