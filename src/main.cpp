@@ -41,6 +41,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 int main(int argc, char* argv[])
 {
 #endif
+	Log::log(QString("Qt ") + QT_VERSION_STR + "...");
 	Config config;
 	bool success = config.load("./config.json");
 	if(!success){
