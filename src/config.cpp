@@ -259,10 +259,13 @@ QHash<QString, QPageLayout::Orientation> Config::PageOrientations = QHash<QStrin
 };
 
 QHash<QString, QPageLayout::Unit> Config::PageUnits = QHash<QString, QPageLayout::Unit>{
+	{"millimeters", QPageLayout::Millimeter},
 	{"millimeter", QPageLayout::Millimeter},
 	{"mm", QPageLayout::Millimeter},
+	{"points", QPageLayout::Point},
 	{"point", QPageLayout::Point},
 	{"pt", QPageLayout::Point},
+	{"inches", QPageLayout::Inch},
 	{"inch", QPageLayout::Inch},
 	{"in", QPageLayout::Inch},
 	{"pica", QPageLayout::Pica},
