@@ -2,7 +2,7 @@
 A simple HTML-to-PDF TCP server proof-of-concept
 
 # Build
-This project doesn't use qmake or Qt Creator in any way, because... why? Instead it uses the much more popular CMake. Assuming CMake is in your PATH, modify the `build/RunCMake.sh` script to point to the directory containing your Qt SDK and then run that script. It'll generate makefiles from which you can run `make && make install` to build the project. The CMake part of the process will take care of generating Qt's magical moc files which will then be included in your build. If you make any changes that require regeneration of those moc files, re-run the script.
+This project doesn't use qmake or Qt Creator in any way, because... why? Instead it uses the much more popular CMake. Assuming CMake is in your PATH, modify the `build/RunCMake.sh` script to point to the directory containing your Qt SDK and then run that script. It'll generate makefiles from which you can run `make` to build the project. The CMake part of the process will take care of generating Qt's magical moc files which will then be included in your build. If you make any changes that require regeneration of those moc files, re-run the script.
 
 # Reasoning
 This project was created after writing a PDF rendering service in Node.js which utilized PhantomJS and being thoroughly disappointed by it. In addition, I then found out that PhantomJS was faltering in its maintenance status (likely in response to similar efforts via Chrome-Headless), so I decided to go to the source of the PDF rendering functionality and utilize Qt directly (which PhantomJS uses under the hood).
